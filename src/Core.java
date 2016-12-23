@@ -13,6 +13,7 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 	};
 	private boolean running;
 	protected ScreenManager sm;
+	public Font font = new Font("Arial", Font.PLAIN, 20);
 
 	//stop Method
 	public void stop(){
@@ -37,10 +38,15 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 		sm.setFullScreen(dm);
 
 		Window w = sm.getFullScreenWindow();
-		w.setFont(new Font( "Arial", Font.PLAIN, 20 ));
+		w.setFont(font);
 		w.setBackground(Color.black);
 		w.setForeground(Color.white);
 		running = true;
+	}
+
+	public void setDefaultListeners(){
+		Window w = sm.getFullScreenWindow();
+		w.addKeyListener(this);
 	}
 
 	public void gameLoop(){
@@ -55,12 +61,13 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 
 			//draw and update the screen
 			Graphics2D g = sm.getGraphics();
+			g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 			draw(g);
 			g.dispose();
 			sm.update();
 
 			try{
-				Thread.sleep(20);
+				Thread.sleep(10);
 			}catch(Exception e){ }
 		}
 	}
@@ -69,6 +76,10 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 	public abstract void draw(Graphics2D g);
 	public abstract void setup();
 
+	//////////////////////////////////////
+	public boolean getRunning(){
+		return running;
+	}
 	//////////////////////////////////////
 
 	public void mousePressed(MouseEvent e){ }
@@ -83,7 +94,7 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 	public void mouseWheelMoved(MouseWheelEvent e){ }
 
 	//key pressed
-	public void keyPressed(KeyEvent e){ }
+	public void keyPressed(KeyEvent e){ stop(); }
 	public void keyReleased(KeyEvent e){ }
 	public void keyTyped(KeyEvent e){ }
 }
