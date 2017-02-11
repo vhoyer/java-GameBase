@@ -1,3 +1,5 @@
+package io.github.vhoyer.GameBase;
+
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
@@ -13,7 +15,9 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 	};
 	private boolean running;
 	protected ScreenManager sm;
-	public Font font = new Font("Arial", Font.PLAIN, 20);
+	protected Window win;
+	public Font font;
+	private Runnable after;
 
 	//stop Method
 	public void stop(){
@@ -26,30 +30,29 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 			init();
 			setup();
 			gameLoop();
+		}catch(Exception err){
+			System.out.println("Internal error in method run()");
+			err.printStackTrace(System.out);
 		}finally{
 			sm.restoreScreen();
 		}
 	}
 
 	//set to full screen
-	public void init(){
+	public synchronized void init(){
 		sm = new ScreenManager();
 		DisplayMode dm = sm.findFirsCompatibleMode(modes);
 		sm.setFullScreen(dm);
 
-		Window w = sm.getFullScreenWindow();
-		w.setFont(font);
-		w.setBackground(Color.black);
-		w.setForeground(Color.white);
+		win = sm.getFullScreenWindow(dm);
+		font = new Font("Arial", Font.PLAIN, 20);
+		win.setFont(font);
+		win.setBackground(Color.black);
+		win.setForeground(Color.white);
 		running = true;
 	}
 
-	public void setDefaultListeners(){
-		Window w = sm.getFullScreenWindow();
-		w.addKeyListener(this);
-	}
-
-	public void gameLoop(){
+	public synchronized void gameLoop(){
 		long startingTime = System.currentTimeMillis();
 		long cumTime = startingTime;
 
@@ -67,8 +70,21 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 			sm.update();
 
 			try{
-				Thread.sleep(10);
-			}catch(Exception e){ }
+				Thread.sleep(20);
+			}catch(Exception e){ System.out.println("Thread slp20 error"); }
+		}
+		executeAfter();
+	}
+
+	public synchronized void executeAfter() {
+		try{
+			if (after != null)
+				(new Thread(after)).start();
+			else
+				System.out.println("Exited successfuly");
+		}catch(java.lang.NullPointerException e){
+			System.out.println("Error: ");
+			System.out.println(e);
 		}
 	}
 
@@ -79,6 +95,9 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 	//////////////////////////////////////
 	public boolean getRunning(){
 		return running;
+	}
+	public void setAfter(Runnable r){
+		after = r;
 	}
 	//////////////////////////////////////
 

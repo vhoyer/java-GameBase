@@ -1,3 +1,5 @@
+package io.github.vhoyer.GameBase;
+
 import java.awt.Image;
 
 public class Sprite{

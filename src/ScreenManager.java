@@ -1,3 +1,5 @@
+package io.github.vhoyer.GameBase;
+
 import java.awt.*;
 import java.awt.image.BufferStrategy;
 import java.awt.image.BufferedImage;
@@ -6,8 +8,13 @@ import javax.swing.JFrame;
 
 public class ScreenManager {
 	private GraphicsDevice vc;
+	private DisplayMode compatibleDisplayMode;
 
 	public ScreenManager(){
+		init();
+	}
+
+	public void init(){
 		GraphicsEnvironment e = GraphicsEnvironment.getLocalGraphicsEnvironment();
 		vc = e.getDefaultScreenDevice();
 	}
@@ -46,6 +53,7 @@ public class ScreenManager {
 	}
 
 	public void setFullScreen(DisplayMode dm){
+		compatibleDisplayMode = dm;
 		JFrame f = new JFrame();
 		f.setUndecorated(true);
 		f.setIgnoreRepaint(true);
@@ -61,12 +69,17 @@ public class ScreenManager {
 	}
 
 	public Graphics2D getGraphics(){
-		Window w = vc.getFullScreenWindow();
-		if(w != null){
-			BufferStrategy s = w.getBufferStrategy();
-			return (Graphics2D)s.getDrawGraphics();
+		for(int i = 0; i < 5; i++){
+			Window w = getFullScreenWindow(compatibleDisplayMode);
+			if(w != null){
+				BufferStrategy s = w.getBufferStrategy();
+				return (Graphics2D)s.getDrawGraphics();
+			}
+			init();
 		}
-		return null;
+
+		System.out.println("getGraphics: window is null");
+		throw new java.lang.NullPointerException();
 	}
 
 	public void update(){
@@ -79,8 +92,24 @@ public class ScreenManager {
 		}
 	}
 
-	public Window getFullScreenWindow(){
-		return vc.getFullScreenWindow();
+	public synchronized Window getFullScreenWindow(DisplayMode dm){
+		Window result = vc.getFullScreenWindow();
+
+		int i = 0;
+		while(result == null && i < 5){
+			i++;
+
+			init();
+			setFullScreen(dm);
+			result = vc.getFullScreenWindow();
+		}
+
+		if(result != null){
+			return result;
+		}
+
+		System.out.println("getFullScreenWindow: window is null");
+		throw new java.lang.NullPointerException();
 	}
 
 	public int getWidth(){
@@ -99,7 +128,7 @@ public class ScreenManager {
 		return 0;
 	}
 
-	public void restoreScreen(){
+	public synchronized void restoreScreen(){
 		Window w = vc.getFullScreenWindow();
 		if(w != null){
 			w.dispose();
@@ -114,5 +143,10 @@ public class ScreenManager {
 			return gc.createCompatibleImage(w, h, t);
 		}
 		return null;
+	}
+
+	public Cursor blankCursor(){
+		BufferedImage cursorImg = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+		return Toolkit.getDefaultToolkit().createCustomCursor(cursorImg, new Point(0, 0), "blank");
 	}
 }
