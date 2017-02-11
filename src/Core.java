@@ -19,6 +19,8 @@ public abstract class Core implements KeyListener,MouseMotionListener,MouseListe
 	public Font font;
 	private Runnable after;
 
+	abstract private ScreenContent content;
+
 	//stop Method
 	public void stop(){
 		running = false;
